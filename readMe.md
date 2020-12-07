@@ -1,7 +1,6 @@
 # GraphQL
 
-## memebers 
-
-    Mohamadreza Abdi		97110285
-    ArshiA Akhavan               97110422
-    Bahar Khodabakhshian		97105906
+## Members
+    ArshiA Akhavan      97110422
+    Mohamadreza Abdi    97110285
+    bahar khodabakhshian    97105906
