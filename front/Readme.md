@@ -1,3 +1,5 @@
+![graphql](https://www.freecodecamp.org/news/content/images/2020/04/cover-3.png)
+
 ## <p dir="rtl" style="position:right;">پیاده‌سازی فرانت GraphQL با استفاده از React + Apollo </p>  
 
 
