@@ -1,5 +1,6 @@
-# GraphQL
+# GraphQl
 
+![graphql](https://upload.wikimedia.org/wikipedia/commons/1/17/GraphQL_Logo.svg)
 ## Members
     ArshiA Akhavan          97110422
     Mohamadreza Abdi        97110285
