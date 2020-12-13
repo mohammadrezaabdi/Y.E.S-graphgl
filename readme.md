@@ -8,7 +8,7 @@
 
 # GraphQl
 <p dir="rtl" style="position:right;">
-GraphQl یک استاندارد تازه برای توصیف (Application Programing Interface) API می‌باشد که توسط facebook  توصعه و متن باز شده است.
+GraphQl یک استاندارد تازه برای توصیف (Application Programing Interface) API می‌باشد که توسط facebook  توسعه و متن باز شده است.
 </p>
 
 <p dir="rtl" style="position:right;">
