@@ -1,0 +1,3 @@
+[submodule "react-apollo"]
+	path = react-apollo
+	url = https://github.com/howtographql/react-apollo.git
