@@ -18,7 +18,7 @@ graphql
   - [Subscription](#subscription)
   - [Schema](#schema)
   - [Types](#types)
-    - [Query and Mutation and Subscription Types](#query-and-mutation-and-subscription-types)
+    - [Query, Mutation and Subscription Types](#query-mutation-and-subscription-types)
     - [Scalar Types](#scalar-types)
     - [Enumeration types](#enumeration-types)
     - [Lists And Null](#lists-and-null)
@@ -72,8 +72,8 @@ query بالا بعد از پردازش در سرور به شکل زیر به ف
 هنگامی که قطعه کد بالا به سمت سرور میرود و در آنجا پردازش میشود, مراحل زیر طی میشود :
 </p>
 <ul dir="rtl">
-1 : اجرا از آبجکت ریشه root شروع میشود.<br>
-2 : فیلد user از آن آبجکت ریشه root انتخاب میشود.<br>
+1 : اجرا از آبجکت ریشه (root) شروع میشود.<br>
+2 : فیلد user از آن آبجکت ریشه (root) انتخاب میشود.<br>
 3 : مرحله دوم یک آبجکت از نوع user به ما میدهد, از آن آبجکت فیلد name انتخاب میشود.<br>
 </ul>
 <p dir="rtl" style="position:right;">
@@ -362,8 +362,8 @@ query giveUser($id: String!, $age: Int! = 20) {
 query giveUser($showAge : Boolean!) {
     user() {
         name
-        age
-        mailAddress @include(if: showAge)
+        age @include(if: showAge)
+        mailAddress 
     }
 }
 {
@@ -500,7 +500,7 @@ query بالا بعد از پردازش به یک آبجکت user به شکل ز
 
 ## Subscription
 <p dir="rtl" style="position:right;">
-در operation های Query و Mutation یک درخواستی از طرف کاربر به سمت سرور فرستاده شده و بلافاصله سرور آن را پردازش کرده و پاسخی به کاربر میدهد. در subscription  بعد از فرستاده شدن درخواست به سمت سرور آن درخواست اجرا نمیشود مادامی که یک اتفاق (event) خاصی در سرور رخ داده شود. (به اصلاح listen میکند) این کار هنگامی انجام پذیر است که یک ارتباط دوطرفه (bi-directional) میان سرور و کاربر برقرار باشد و کاربر با فرستادن یک subscription به سمت سرور و اعلام رویداد موردنظر, پاسخی را پس از رخ دادن آن رویداد دریافت کند.
+در operation های Query و Mutation, یک درخواست از طرف کاربر به سمت سرور فرستاده میشود و بلافاصله سرور آن را پردازش کرده و پاسخی به کاربر میدهد. در subscription  بعد از فرستاده شدن درخواست به سمت سرور, آن درخواست اجرا نمیشود تا زمانی که یک اتفاق (event) خاصی در سرور رخ بدهد. (به اصلاح درخواست listen میکند) این کار هنگامی انجام پذیر است که یک ارتباط دوطرفه (bi-directional) میان سرور و کاربر برقرار باشد و کاربر با فرستادن یک subscription به سمت سرور و اعلام رویداد موردنظر, پاسخی را پس از رخ دادن آن رویداد دریافت کند.
 
 ## Schema
 <p dir="rtl" style="position:right;">
@@ -543,7 +543,7 @@ type Mail {
 در ادامه با انواع  type های موجود در graphql آشنا خواهیم شد:
 </p>
 
- - [Query and Mutation and Subscription Types](#query-and-mutation-and-subscription-types)
+ - [Query, Mutation and Subscription Types](#query-and-mutation-and-subscription-types)
  - [Scalar Types](#scalar-types)
  - [Enumeration types](#enumeration-types)
  - [Lists And Null](#lists-and-null)
@@ -551,7 +551,7 @@ type Mail {
  - [Union types](#union-types)
  - [Input Types](#input-types)
 
-### Query and Mutation and Subscription Types
+### Query, Mutation and Subscription Types
 <p dir="rtl" style="position:right;">
 تایپ های Query و Mutation و Subscription از تایپ های بسیار مهم در graphql هستند. به طوری که هر graphql حتما تایپ Query را دارد و ممکن است که تایپ های Mutation و Subscription هم داشته باشد. چرا که برای ارتباط سرور و کاربر با  یک دیگر حتما به فیلد های این تایپ ها نیاز داریم. اگر مثلا فیلدی در یک query قرار داشته باشد هنگام پردازش آن query میبایست تایپ فیلد های مورد استفاده در تایپ Query نیز حضور داشته باشند. به عنوان مثال در سرویس ایمیل برای دریافت کلیه user ها و mail ها بایستی ابتدا بنویسیم :
 </p>
@@ -597,7 +597,7 @@ query giveAllUsersAndMails {
 
 ### Enumeration types
 <p dir="rtl" style="position:right;">
-enum ها نوعی از scalar ها هستند کهفقط توانایی ذخیره چند مقدار محدود و از پیش تعیین شده را در خود دارند و در هر لحظه فقط میتوانند یکی از مقادیرشان را اتخاذ کنند. کاربرد enum  در graphql بسیار شبیه به سایر زبان های برنامه نویسی است فقط با این تفاوت که qraphql فیلد های enum را به integer تبدیل نمیکند و هنگام ارسال query تنها ماهیت رشته ای فیلد های آن منتقل میشود.<br>
+enum ها نوعی از scalar ها هستند که فقط توانایی ذخیره چند مقدار محدود و از پیش تعیین شده را در خود دارند و در هر لحظه فقط میتوانند یکی از مقادیرشان را اتخاذ کنند. کاربرد enum  در graphql بسیار شبیه به سایر زبان های برنامه نویسی است فقط با این تفاوت که qraphql فیلد های enum را به integer تبدیل نمیکند و هنگام ارسال query تنها ماهیت رشته ای فیلد های آن منتقل میشود.<br>
 به عنوان مثال در سرویس ایمیل میخواهیم پروتکل ارسال ایمیل را با MailProtocol نشان دهیم . مینویسیم:
 </p>
 
@@ -682,7 +682,7 @@ interface Shape{
 حال ۲ تایپ Circle و Triangle را به شکل زیر تعریف میکنیم که تایپ Shape را implement میکنند.
 
 ```graphql
-type Triangle implements Animal{
+type Triangle implements Shape{
     id: ID!
     innerColor: COLOR
     borderWidth: Int!
@@ -695,7 +695,7 @@ type Triangle implements Animal{
 ```
 
 ```graphql
-type Circle implements Animal{
+type Circle implements Shape{
     id: ID!
     innerColor: COLOR
     borderWidth: Int!
@@ -759,7 +759,7 @@ union در graphql به مفهموم اجتماع گیری چند تایپ با 
 ```graphql
 union Shape = Circle | Triangle
 
-type Triangle implements Animal{
+type Triangle implements Shape{
     id: ID!
     innerColor: COLOR
     borderWidth: Int!
@@ -770,7 +770,7 @@ type Triangle implements Animal{
     thirdEdgeLength(unit: LengthUnit = CM) : Int!
 }
 
-type Circle implements Animal{
+type Circle implements Shape{
     id: ID!
     innerColor: COLOR
     borderWidth: Int!
