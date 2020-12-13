@@ -103,3 +103,17 @@ GraphQl به کلاینت این اجازه را می‌دهد که request خو
 <li>مصرف network مهم باشد مانند API Callهای سمت front  که با از بین بردن overfetching میزان مصرف trafic را به حد اقل رساندیم</li>
 <li>دولپمنت سریع و چابک مد نظر باشد.
 مثلا برای زمانی که front-end و back-end به صورت جدا و موازی در حال توسعه هستند و نیاز است تا یک قرارداد ثابت (GraphQl Schema) بین front-end و back-end وجود داشته باشد تا هر کدام بتوانند به صورت آزادانه به توسعه‌ی خود ادامه دهند و دغدغه دیگری را نداشته باشند </li>
+</ol>
+ 
+ # End of the jurney?
+
++ [GraphQl core concepts](/core.md)
++ [simple back-end based on GraphQl using Go](/back/readme.md)
++ [simple front-end based on GraphQl using apolo + react](/front/readme.md)
+
+
+ 
+ ## resources
+>https://www.howtographql.com/
+
+>https://graphql.org/learn
