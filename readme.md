@@ -52,6 +52,8 @@ GraphQl به کلاینت این اجازه را می‌دهد که request خو
 <li>/users/#id/posts برای گرفتن ۳ پست آخر</li>
 <li>/users/#id/followers برای گرفتن ۳ دوست اخیر کاربر</li>
 </ol>
+
+<p dir="rtl" style="position:right;">
 حال می‌خواهیم تک‌تک API ها را با بررسی کنیم:
 
 + /user/#id/
