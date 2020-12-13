@@ -440,4 +440,298 @@ const [signup] = useMutation(SIGNUP_MUTATION, {
 });
 ```
 
+<p dir="rtl" style="position:right;">
+همان‌طور که گفته شد، قسمت دیگری در پروژه وجود دارد که در آن کاربرانی که در سایت ثبت نام شده‌اند می‌توانند به هر کدام از لینک‌ها رای دهند یا رای خود را پس گیرند. <br />
+برای اینکه وضعیت هر لینک را با توجه به رای کاربر عوض کنیم، query‌ای که قبلا با نام FEED_QUERY در فایل LinkList.js نوشته بودیم را به‌روزرسانی می‌کنیم که کد جدید آن به صورت زیر است :
+</p>
+
+```js
+export const FEED_QUERY = gql`
+  {
+    feed {
+      id
+      links {
+        id
+        createdAt
+        url
+        description
+        postedBy {
+          id
+          name
+        }
+        votes {
+          id
+          user {
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+```
+<p dir="rtl" style="position:right;">
+همچنین نیاز به یک mutation برای عملیات رای دادن نیاز داریم که آن را با نام VOTE_MUTATION در فایل Link.js به صورت زیر می‌نویسیم :
+</p>
+
+```js
+const VOTE_MUTATION = gql`
+  mutation VoteMutation($linkId: ID!) {
+    vote(linkId: $linkId) {
+      id
+      link {
+        id
+        votes {
+          id
+          user {
+            id
+          }
+        }
+      }
+      user {
+        id
+      }
+    }
+  }
+`;
+```
+<p dir="rtl" style="position:right;">
+همانند قبل از تابع useMutation استفاده می‌کنیم تا تابعی به نام vote بسازیم و هر جا که نیاز بود از آن استفاده کنیم. پارامترهایی که به تابع useMutation در این قسمت پاس می‌دهیم، VOTE_MUTATION و شناسه‌ی لینکی که کاربر انتخاب کرده است.<br />
+بنابراین فایل Link.js را به صورت زیر به روز رسانی می‌کنیم : 
+</p>
+
+```js
+const Link = (props) => {
+  // ...
+  const [vote] = useMutation(VOTE_MUTATION, {
+    variables: {
+      linkId: link.id
+    }
+  });
+  return (
+    <div className="flex mt2 items-start">
+      <div className="flex items-center">
+        <span className="gray">{props.index + 1}.</span>
+        <div
+          className="ml1 gray f11"
+          style={{ cursor: 'pointer' }}
+          onClick={vote}
+        >
+          ▲
+        </div>
+      </div>
+      <div className="ml1">
+        <div>
+          {link.description} ({link.url})
+        </div>
+        {authToken && (
+          <div className="f6 lh-copy gray">
+            {link.votes.length} votes | by{' '}
+            {link.postedBy ? link.postedBy.name : 'Unknown'}{' '}
+            {timeDifferenceForDate(link.createdAt)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+```
+<p dir="rtl" style="position:right;">
+همان‌طور که میبینیم، تابع vote را با کلیک کردن بر روی علامت کنار هر لینک صدا می‌زنیم.
+</p>
+
+<p dir="rtl" style="position:right;">
+<br />
+یکی از ویژگی‌های دیگر apollo client این است که برای طرف client در برنامه‌های مربوط به graphQL، یک حافظه‌ی نهان ایجاد و نگهداری می‌کند. معمولا نیاز نیست کار زیادی برای مدیریت این حافظه انجام دهیم، اما بعضی اوقات با توجه به شرایط نیاز به برخی راهکار‌ها در این زمینه داریم. <br />
+<br />
+برای مثال در این پروژه، وقتی درخواست mutation برای سرور میفرستیم، نیاز است به طور دستی در به‌روز رسانی کردن حافظه دخالت داشته باشیم. این کار را با استفاده از امکاناتی که apollo client در اختیار ما قرار می‌دهد می‌توانیم انجام دهیم. <br />
+هنگامی که در فایل Link.js، درخواست mutation برای vote میفرستیم، این به‌روز رسانی حافظه باید انجام شود. بنابراین تابعی را که در فایل Link.js با نام vote با استفاده از useMutation ایجاد کرده‌ایم را به صورت زیر عوض می‌کنیم :
+</p>
+
+```js
+const Link = (props) => {
+  // ...
+  const [vote] = useMutation(VOTE_MUTATION, {
+    variables: {
+      linkId: link.id
+    },
+    update(cache, { data: { vote } }) {
+      const { feed } = cache.readQuery({
+        query: FEED_QUERY
+      });
+
+      const updatedLinks = feed.links.map((feedLink) => {
+        if (feedLink.id === link.id) {
+          return {
+            ...feedLink,
+            votes: [...feedLink.votes, vote]
+          };
+        }
+        return feedLink;
+      });
+
+      cache.writeQuery({
+        query: FEED_QUERY,
+        data: {
+          feed: {
+            links: updatedLinks
+          }
+        }
+      });
+    }
+  });
+
+  // ...
+};
+```
+<p dir="rtl" style="position:right;">
+در کد بالا، تابع update بعد از کامل شدن mutation انجام می‌شود و به ما اجازه می‌دهد که از حافظه‌ بخوانیم یا داده‌ای را تغییر دهیم و آن را ذخیره کنیم.<br />
+همان‌طور که می‌یبینیم در تابع update، تابعی به نام cache.readQuery صدا زده شده که به آن، FEED_QUERY را به عنوان query داده می‌شود. این کار به ما این اجازه را می‌دهد که دقیقا به همان بخشی از حافظه که می‌خواهیم آن را به روزرسانی کنیم دسترسی پیدا کنیم. حالا که به این قسمت از حافظه دسترسی داریم، می‌توانیم یک آرایه‌ی جدید از داده‌ها شامل رای جدیدی که ساخته شده بسازیم. حال با استفاده از تابع cache.writeQuery این لیست جدید را در حافظه ذخیره و لیست رای‌ها را به روزرسانی می‌کنیم.<br />
+همین‌کار را برای اضافه کردن لینک جدید در فایل CreateLink.js نیز باید انجام دهیم. پس تابع createLink را به صورت زیر تغییر می‌دهیم :
+</p>
+
+```js
+const [createLink] = useMutation(CREATE_LINK_MUTATION, {
+    variables: {
+      description: formState.description,
+      url: formState.url
+    },
+    update: (cache, { data: { post } }) => {
+      const take = LINKS_PER_PAGE;
+      const skip = 0;
+      const orderBy = { createdAt: 'desc' };
+
+      const data = cache.readQuery({
+        query: FEED_QUERY,
+        variables: {
+          take,
+          skip,
+          orderBy
+        }
+      });
+
+      cache.writeQuery({
+        query: FEED_QUERY,
+        data: {
+          feed: {
+            links: [post, ...data.feed.links]
+          }
+        },
+        variables: {
+          take,
+          skip,
+          orderBy
+        }
+      });
+    },
+    onCompleted: () => history.push('/new/1')
+  });
+```
+
+<p dir="rtl" style="position:right;">
+در کد بالا نیز، تابع update به شکل قبل کار می‌کند. ابتدا نتیجه‌های فعلی FEED_QUERY را می‌خوانیم و سپس لینک جدید را به آن اضافه می‌کنیم و همانند قبل دوباره آن را در حافظه می‌نویسیم.<br />
+<br />
+یکی دیگر از قسمت‌های این پروژه، توانایی جست و جو کردن کاربر میان لینک‌ها است. به توضیح قسمت‌های مربوط به GraphQL این بخش می‌پردازیم.<br />
+فایلی به نام Search.js در پوشه‌ی src/components وجود دارد. برای این قسمت، نیاز به نوشتن یک query برای فیلترکردن لیست لینک‌ها داریم. پس کوئری FEED_SEARCH_QUERY در این فایل به صورت زیر قرار دارد :
+</p>
+
+```js
+const FEED_SEARCH_QUERY = gql`
+  query FeedSearchQuery($filter: String!) {
+    feed(filter: $filter) {
+      id
+      links {
+        id
+        url
+        description
+        createdAt
+        postedBy {
+          id
+          name
+        }
+        votes {
+          id
+          user {
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+```
+<p dir="rtl" style="position:right;">
+این کوئری یک پارامتر به نام filter می‌گیرد که برای فیلترکردن لیست لینک‌ها از ان استفاده می‌کند. از پارامتر filter در واقع در یکی از فایل‌های مربوط به سرور در مسیر server/src/resolvers/Query.js استفاده می‌شود که کد این قسمت از فایل به صورت زیر است :
+</p>
+
+```js
+async function feed(parent, args, context, info) {
+  const where = args.filter
+    ? {
+        OR: [
+          { description: { contains: args.filter } },
+          { url: { contains: args.filter } }
+        ]
+      }
+    : {};
+
+  const links = await context.prisma.link.findMany({
+    where,
+    skip: args.skip,
+    take: args.take,
+    orderBy: args.orderBy
+  });
+
+  const count = await context.prisma.link.count({ where });
+
+  return {
+    id: 'main-feed',
+    links,
+    count
+  };
+}
+
+module.exports = {
+  feed
+};
+```
+<p dir="rtl" style="position:right;">
+تابع feed که در بالا تعریف شده، همان تابعی است که در کوئری FEED_SEARCH_QUERY از آن استفاده شده است. در اینجا وارد جزئیات مربوط به سرور نمیشویم و آن‌ها را در بخش دیگری توضیح می‌دهیم.<br />
+<br />
+در بخش search نیاز داریم که هرگاه دکمه‌ی OK فشار داده شد، کوئری مربوط به جست و جو که همان FEED_SEARCH_QUERY  است فرستاده شود. اما چون از تابع useQuery استفاده می‌کنیم، این درخواست فقط زمانی انجام می‌شود که کل component مربوط به جست و جو لود شود. برای رفع این مشکل از تابع دیگری به نام useLazyQuery استفاده می‌کنیم. عملکرد این تابع مثل useQuery است با این تفاوت که می‌توانیم آن را دستی اجرا کنیم. بنابراین از آن استفاده می‌کنیم تا هرگاه دکمه‌ی OK فشار داده شد، این کوئری اجرا شود. پس فایل Search.js را به صورت زیر تغییر می‌دهیم :
+</p>
+
+```js
+const Search = () => {
+  const [searchFilter, setSearchFilter] = useState('');
+  const [executeSearch, { data }] = useLazyQuery(
+    FEED_SEARCH_QUERY
+  );
+  return (
+    <>
+      <div>
+        Search
+        <input
+          type="text"
+          onChange={(e) => setSearchFilter(e.target.value)}
+        />
+        <button
+          onClick={() =>
+            executeSearch({
+              variables: { filter: searchFilter }
+            })
+          }
+        >
+          OK
+        </button>
+      </div>
+      {data &&
+        data.feed.links.map((link, index) => (
+          <Link key={link.id} link={link} index={index} />
+        ))}
+    </>
+  );
+};
+```
+
 
