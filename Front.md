@@ -33,7 +33,7 @@
 در پیاده‌سازی پروژه‌ي ذکر شده از Apollo Client استفاده می‌کنیم. <br />
 </p>
 
-### <p  dir="rtl" style="position:right;"> توضیح قسمت frontend پروژه</p>
+### <p  dir="rtl" style="position:right;">  توضیح قسمت‌های مربوط به graphQL در بخش front پروژه</p>
 
 <p dir="rtl" style="position:right;">
 کل فایل‌های مربوط به بخش front سایت در پوشه‌ی front قرار دارد.<br />
