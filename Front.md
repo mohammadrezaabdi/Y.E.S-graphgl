@@ -734,4 +734,207 @@ const Search = () => {
 };
 ```
 
+<p dir="rtl" style="position:right;">
+یکی دیگر از بخش‌های این برنامه، realtime بودن آن است که این ویژگی را با استفاده از subscription‌ها در GraphQL پیاده‌سازی می‌کنیم. با استفاده از subscriptionها به هنگام رخ دادن یک رویداد مشخص، سرور داده‌هایی را به سمت کلاینت می‌فرستد. وقتی از subscription استفاده می‌کنیم، سرور یک ارتباط به کلاینت برقرار می‌کند که در هنگام رخ دادن رویدادی که از قبل مشخص شده، داده‌های مورد نیاز client را برای آن ارسال می‌کند. در واقع subscription‌ها از WebSocket برای برقراری ارتباط استفاده میکنند.<br />
+<br />
+می‌خواهیم ببینیم چگونه از subscription در apollo client استفاده کنیم. ابتدا خط زیر را در ترمینال اجرا کنید :
+</p>
+
+```
+yarn add subscriptions-transport-ws
+```
+<p dir="rtl" style="position:right;">
+سپس ۳ خط زیر را به قسمت import‌های فایل index.js اضافه می‌کنیم.
+</p>
+
+```js
+import { split } from '@apollo/client';
+import { WebSocketLink } from '@apollo/client/link/ws';
+import { getMainDefinition } from '@apollo/client/utilities';
+```
+<p dir="rtl" style="position:right;">
+فایل index.js را به صورت زیر تغییر می‌دهیم :
+</p>
+
+```js
+const wsLink = new WebSocketLink({
+  uri: `ws://localhost:4000/graphql`,
+  options: {
+    reconnect: true,
+    connectionParams: {
+      authToken: localStorage.getItem(AUTH_TOKEN)
+    }
+  }
+});
+
+const link = split(
+  ({ query }) => {
+    const { kind, operation } = getMainDefinition(query);
+    return (
+      kind === 'OperationDefinition' &&
+      operation === 'subscription'
+    );
+  },
+  wsLink,
+  authLink.concat(httpLink)
+);
+
+const client = new ApolloClient({
+  link,
+  cache: new InMemoryCache()
+});
+```
+<p dir="rtl" style="position:right;">
+در کد بالا، wsLink نشاندهنده‌ی یک ارتباط WebSocket برای subscription ها است. همچنین از تابع split برای مسیریابی صحیح درخواست‌ها و به روزرسانی صدازدن ApolloClient استفاده می‌کنیم. وب‌سوکتی که پیاده می‌کنیم، به subscription endpoints آگاه است. در اینجا endpoint مربوط به subscription مشابه Http endpoint است با این تفاوت که در subscription از پروتکل ws (websocket) به جای http استفاده می‌شود. همچنین websocket تعریف شده، با استفاده از token مربوط به کاربر که در localstorage ذخیره شده احراز هویت می‌شود.<br />
+تابع split در اینجا استفاده می‌شود تا request را به یک middleware link مشخصی هدایت کند. این تابع ۳ ورودی می‌گیرد. اولی یک تابع است و ورودی‌های دوم و سوم هرکدام از جنس ApolloLink هستند. ورودی اول که یک تابع است، مقدار bool برمیگرداند. اگر این مقدار true باشد، request به لینک ورودی دوم تابع split و در غیر این صورت به لینک ورودی سوم تابع split هدایت می‌شود. <br />
+در کد index.js، تابع ورودی اول split نشان می دهد که آیا عملیات درخواست شده از جنس subscription هست یا خیر. اگر بود، آن را به سمت wsLink و اگر نبود آن را به سمت httpLink هدایت می‌کند.<br />
+<br />
+حال می‌خواهیم از subscription برای realtime کردن برنامه استفاده کنیم.<br />
+برای اینکه بخواهیم در هنگام ساخته شدن لینک‌های جدید، برنامه به صورت realtime کار کند، باید رخداد‌هایی را که برای لینک‌ها اتفاق می‌افتد را subscribe کنیم. <br />
+تابع useQuery به ما دسترسی به تابعی به نام subscribeToMore را می‌دهد. می‌توانیم ساختار این تابع را دوباره و مطابق آنچه میخواهیم بنویسیم و از آن برای انجام کار روی داده‌های جدیدی که طی subscription می‌رسد استفاده کنیم.<br />
+فایل LinkList.js را به صورت زیر تغییر می‌دهیم :
+</p>
+
+```js
+const getQueryVariables = (isNewPage, page) => {
+  const skip = isNewPage ? (page - 1) * LINKS_PER_PAGE : 0;
+  const take = isNewPage ? LINKS_PER_PAGE : 100;
+  const orderBy = { createdAt: 'desc' };
+  return { take, skip, orderBy };
+};
+
+const LinkList = () => {
+  const history = useHistory();
+  const isNewPage = history.location.pathname.includes(
+    'new'
+  );
+  const pageIndexParams = history.location.pathname.split(
+    '/'
+  );
+  const page = parseInt(
+    pageIndexParams[pageIndexParams.length - 1]
+  );
+
+  const pageIndex = page ? (page - 1) * LINKS_PER_PAGE : 0;
+
+  const {
+    data,
+    loading,
+    error,
+    subscribeToMore
+  } = useQuery(FEED_QUERY, {
+    variables: getQueryVariables(isNewPage, page)
+  });
+
+  subscribeToMore({
+    // ...
+  });
+
+  // ...
+};
+```
+
+<p dir="rtl" style="position:right;">
+تابع subscribeToMore یک object به عنوان ورودی می‌گیرد که نیاز است آن را برای چگونه گوش دادن یا جواب دادن به subscription تنظیم کنیم.<br />
+ابتدا باید یک subscription document یه کلید document در این object پاس دهیم. این document در واقع یک GraphQL document است که در آن subscription خود را تعریف می‌کنیم. همچنین می‌توانیم به یک کلید به نام updateQuery یک تابع پاس دهیم که از آن برای به روز رسانی کردن حافظه استفاده کنیم. <br />
+تنظیمات توضیح داده‌شده برای object ورودی به تابع subscribeToMore به صورت زیر پیاده‌سازی می‌شود :
+</p>
+
+```js
+subscribeToMore({
+  document: NEW_LINKS_SUBSCRIPTION,
+  updateQuery: (prev, { subscriptionData }) => {
+    if (!subscriptionData.data) return prev;
+    const newLink = subscriptionData.data.newLink;
+    const exists = prev.feed.links.find(
+      ({ id }) => id === newLink.id
+    );
+    if (exists) return prev;
+
+    return Object.assign({}, prev, {
+      feed: {
+        links: [newLink, ...prev.feed.links],
+        count: prev.feed.links.length + 1,
+        __typename: prev.feed.__typename
+      }
+    });
+  }
+});
+```
+<p dir="rtl" style="position:right;">
+پس از این کافی است یک subscription به نام NEW_LINKS_SUBSCRIPTION با استفاده از gal تعریف کنیم.
+</p>
+
+```js
+const NEW_LINKS_SUBSCRIPTION = gql`
+  subscription {
+    newLink {
+      id
+      url
+      description
+      createdAt
+      postedBy {
+        id
+        name
+      }
+      votes {
+        id
+        user {
+          id
+        }
+      }
+    }
+  }
+`;
+```
+<p dir="rtl" style="position:right;">
+کار‌هایی که برای subscription در بالا توضیح داده‌شد را برای اضافه کردن رای‌های جدید نیز انجام می‌دهیم.<br />
+پس در فایل LinkList.js کد‌ زیر را به LinkList component اضافه می‌کنیم.
+</p>
+
+```js
+subscribeToMore({
+  document: NEW_VOTES_SUBSCRIPTION
+});
+```
+<p dir="rtl" style="position:right;">
+همچنین همانند قسمت قبل یک subscription دیگر به نام NEW_VOTES_SUBSCRIPTION در بالای فایل LinkList.js اضافه می کنیم.
+</p>
+
+```js
+const NEW_VOTES_SUBSCRIPTION = gql`
+  subscription {
+    newVote {
+      id
+      link {
+        id
+        url
+        description
+        createdAt
+        postedBy {
+          id
+          name
+        }
+        votes {
+          id
+          user {
+            id
+          }
+        }
+      }
+      user {
+        id
+      }
+    }
+  }
+`;
+```
+
+<p dir="rtl" style="position:right;">
+در نهایت برنامه‌ی ما به صورت realtime قابل اجرا است!<br />
+<br />
+به این ترتیب توانستیم با استفاده از Apollo Client برنامه‌ای پیاده‌سازی کنیم که از GraphQL برای صدا زدن api‌ها استفاده کند و کاربرد آن را در پروژه‌ای واقعی مشاهده کنیم.
+</p>
+  
+
 
