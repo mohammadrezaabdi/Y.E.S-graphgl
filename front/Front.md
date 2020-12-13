@@ -1,4 +1,4 @@
-## <p dir="rtl" style="position:right;">فرانت GraphQL با استفاده از React + Apollo </p>  
+## <p dir="rtl" style="position:right;">پیاده‌سازی فرانت GraphQL با استفاده از React + Apollo </p>  
 
 
 
