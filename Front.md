@@ -929,6 +929,12 @@ const NEW_VOTES_SUBSCRIPTION = gql`
   }
 `;
 ```
+
+<p dir="rtl" style="position:right;">
+در نهایت برنامه‌ی ما به صورت realtime قابل اجرا است!<br />
+<br />
+به این ترتیب توانستیم با استفاده از Apollo Client برنامه‌ای پیاده‌سازی کنیم که از GraphQL برای صدا زدن api‌ها استفاده کند و کاربرد آن را در پروژه‌ای واقعی مشاهده کنیم.
+</p>
   
 
 
